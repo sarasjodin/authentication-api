@@ -1,7 +1,12 @@
 /* Routes for authentication API, including user registration and login endpoints. */
+require('dotenv').config();
 
 const express = require('express');
 const router = express.Router();
+const sqlite3 = require('sqlite3').verbose();
+
+// Connect to db
+const db = new sqlite3.Database(process.env.DATABASE_URL);
 
 router.post('/register', async (req, res) => {
   try {
@@ -13,11 +18,31 @@ router.post('/register', async (req, res) => {
         .status(400)
         .json({ message: 'Username and password are required' });
     }
-    console.log('Registering user:', req.body);
 
-    // Correctly insert the new user into the database
+    // Check if user already exists
 
-    res.status(201).json({ message: 'User registered successfully' });
+    const checkSql = `SELECT * FROM users WHERE username = ?`;
+    db.get(checkSql, [userName], (err, row) => {
+      if (err) {
+        console.error('Error querying database:', err.message);
+        return res.status(500).json({ message: 'Server error' });
+      }
+      if (row) {
+        return res.status(400).json({ message: 'Username already exists' });
+      }
+
+      // If user does not exist, create new user
+      // Correct - save user (store in database)
+      const sql = `INSERT INTO users (username, password) VALUES (?, ?)`;
+      db.run(sql, [userName, pass], (err) => {
+        if (err) {
+          console.error('Error querying database:', err.message);
+          return res.status(400).json({ message: 'Error creating user' });
+        } else {
+          return res.status(201).json({ message: 'User created successfully' });
+        }
+      });
+    });
   } catch (error) {
     console.error('Error registering user:', error);
     res.status(500).json({ message: 'Server error' });
