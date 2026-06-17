@@ -61,12 +61,34 @@ router.post('/login', async (req, res) => {
         .status(400)
         .json({ message: 'Username and password are required' });
     }
-    if (userName === 'mattias' && pass === 'password') {
-      console.log('Logging in user:', req.body);
+
+    // Check credentials against database
+    // Check if user exists
+    const sql = `SELECT * FROM users WHERE username = ?`;
+    db.get(sql, [userName], async (err, row) => {
+      if (err) {
+        console.error('Error querying database:', err.message);
+        return res.status(400).json({ message: 'Error authenticating' });
+      }
+
+      if (!row) {
+        return res
+          .status(401)
+          .json({ message: 'Incorrect username and/or password' });
+      }
+
+      // User exists, check password
+      const passwordMatch = await bcrypt.compare(pass, row.password);
+
+      if (!passwordMatch) {
+        return res
+          .status(401)
+          .json({ message: 'Incorrect username and/or password' });
+      }
+
+      console.log('Logging in user:', userName);
       res.status(200).json({ message: 'User logged in successfully' });
-    } else {
-      res.status(401).json({ message: 'Invalid credentials' });
-    }
+    });
   } catch (error) {
     console.error('Error logging in user:', error);
     res.status(500).json({ message: 'Server error' });
