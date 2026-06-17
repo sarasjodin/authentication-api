@@ -2,7 +2,18 @@
 This server will handle user registration, login, and token-based authentication.
  */
 
-require('dotenv').config();
+const path = require('path');
+const dotenv = require('dotenv');
+
+const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
+
+dotenv.config({
+  path: path.resolve(__dirname, envFile)
+});
+
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
+
 const express = require('express');
 const authRoutes = require('./routes/authRoutes');
 const cors = require('cors');
