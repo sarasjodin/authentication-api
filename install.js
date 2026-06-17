@@ -7,18 +7,14 @@ const db = new sqlite3.Database(process.env.DATABASE_URL);
 
 // Create table users
 db.serialize(() => {
-  // Drop table if exists
-  db.run(`DROP TABLE IF EXISTS users`);
-
-  // Create users table
   db.run(
     `
-        CREATE TABLE users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username VARCHAR(255) NOT NULL UNIQUE,
-            password VARCHAR(255) NOT NULL,
-            created DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username VARCHAR(255) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
     `,
     (err) => {
       if (err) {
