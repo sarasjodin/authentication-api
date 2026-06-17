@@ -1,1 +1,19 @@
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    container_name: authentication-api-local
+    restart: unless-stopped
+    ports:
+      - '${PORT}:${PORT}'
+    env_file:
+      - .env.local
+    volumes:
+      - ./sqlite_data:/app/sqlite_data
+    networks:
+      - authentication
+
+networks:
+  authentication:
+    driver: bridge
