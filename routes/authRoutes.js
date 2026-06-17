@@ -1,9 +1,8 @@
 /* Routes for authentication API, including user registration and login endpoints. */
-require('dotenv').config();
-
 const express = require('express');
 const router = express.Router();
 const sqlite3 = require('sqlite3').verbose();
+const bcrypt = require('bcrypt');
 
 // Connect to db
 const db = new sqlite3.Database(process.env.DATABASE_URL);
@@ -18,6 +17,9 @@ router.post('/register', async (req, res) => {
         .status(400)
         .json({ message: 'Username and password are required' });
     }
+
+    // Hash the password before storing it
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
     // Check if user already exists
 
@@ -34,7 +36,7 @@ router.post('/register', async (req, res) => {
       // If user does not exist, create new user
       // Correct - save user (store in database)
       const sql = `INSERT INTO users (username, password) VALUES (?, ?)`;
-      db.run(sql, [userName, pass], (err) => {
+      db.run(sql, [userName, hashedPassword], (err) => {
         if (err) {
           console.error('Error querying database:', err.message);
           return res.status(400).json({ message: 'Error creating user' });
