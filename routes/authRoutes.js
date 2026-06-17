@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // Connect to db
 const db = new sqlite3.Database(process.env.DATABASE_URL);
@@ -87,7 +88,16 @@ router.post('/login', async (req, res) => {
       }
 
       console.log('Logging in user:', userName);
-      res.status(200).json({ message: 'User logged in successfully' });
+      // Create JWT token
+      const payload = { username: userName };
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: '1h'
+      });
+      const responseData = {
+        message: 'User logged in successfully!',
+        token: token
+      };
+      return res.status(200).json({ responseData });
     });
   } catch (error) {
     console.error('Error logging in user:', error);
