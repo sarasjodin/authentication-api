@@ -10,17 +10,17 @@ const db = new sqlite3.Database(process.env.DATABASE_URL);
 
 router.post('/register', async (req, res) => {
   try {
-    const { username: userName, password: pass } = req.body;
+    const { username: userName, email, password: pass } = req.body;
 
     // Validation
-    if (!userName || !pass) {
+    if (!userName || !pass || !email) {
       return res
         .status(400)
-        .json({ message: 'Username and password are required' });
+        .json({ message: 'Username, email, and password are required' });
     }
 
     // Hash the password before storing it
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const hashedPassword = await bcrypt.hash(pass, 10);
 
     // Check if user already exists
 
@@ -36,8 +36,8 @@ router.post('/register', async (req, res) => {
 
       // If user does not exist, create new user
       // Correct - save user (store in database)
-      const sql = `INSERT INTO users (username, password) VALUES (?, ?)`;
-      db.run(sql, [userName, hashedPassword], (err) => {
+      const sql = `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`;
+      db.run(sql, [userName, email, hashedPassword], (err) => {
         if (err) {
           console.error('Error querying database:', err.message);
           return res.status(400).json({ message: 'Error creating user' });
@@ -54,13 +54,13 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    const { username: userName, password: pass } = req.body;
+    const { username: userName, email, password: pass } = req.body;
 
     // Validation
-    if (!userName || !pass) {
+    if (!userName || !pass || !email) {
       return res
         .status(400)
-        .json({ message: 'Username and password are required' });
+        .json({ message: 'Username, email, and password are required' });
     }
 
     // Check credentials against database
@@ -72,16 +72,19 @@ router.post('/login', async (req, res) => {
         return res.status(400).json({ message: 'Error authenticating' });
       }
 
+      console.log('Username:', userName);
+      console.log('Email:', email);
+
       if (!row) {
         return res
           .status(401)
           .json({ message: 'Incorrect username and/or password' });
-        console.log('Username:', userName);
       }
 
       // User exists, check password
       const passwordMatch = await bcrypt.compare(pass, row.password);
       console.log('Password:', passwordMatch);
+      console.log('Database row:', row);
 
       if (!passwordMatch) {
         return res
@@ -91,7 +94,11 @@ router.post('/login', async (req, res) => {
 
       console.log('Logging in user:', userName);
       // Create JWT token
-      const payload = { username: userName };
+      const payload = {
+        id: row.id,
+        username: row.username,
+        email: row.email
+      };
       const token = jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: '1h'
       });
@@ -106,5 +113,41 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// Protected routes
+router.get('/protected', authenticateToken, (req, res) => {
+  res.json({
+    message: 'This is a protected route',
+    user: {
+      id: req.user.id,
+      username: req.user.username,
+      email: req.user.email
+    }
+  });
+});
+
+// Validate JWT token middleware
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Token (how we send it, without "Bearer")
+
+  // Token missing
+  if (!token) {
+    res
+      .status(401)
+      .json({ message: 'Not authorized for this route - token missing' });
+  }
+
+  // Token present, verify it
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res
+        .status(403)
+        .json({ message: 'Not authorized for this route - token invalid' });
+    }
+    req.user = user;
+    next();
+  });
+}
 
 module.exports = router;
