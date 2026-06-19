@@ -48,35 +48,6 @@ app.listen(PORT, () => {
   console.log(`Authentication API running on port ${PORT}`);
 });
 
-// Protected routes
-app.get('/api/protected', authenticateToken, (req, res) => {
-  return res.json({ message: 'This is a protected route' });
-});
-
-// Validate JWT token middleware
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Token (how we send it, without "Bearer")
-
-  // Token missing
-  if (!token) {
-    res
-      .status(401)
-      .json({ message: 'Not authorized for this route - token missing' });
-  }
-
-  // Token present, verify it
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      return res
-        .status(403)
-        .json({ message: 'Not authorized for this route - token invalid' });
-    }
-    req.userName = user.username;
-    next();
-  });
-}
-
 const sqlite3 = require('sqlite3').verbose();
 
 const db = new sqlite3.Database(process.env.DATABASE_URL);
