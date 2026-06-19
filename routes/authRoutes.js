@@ -76,10 +76,12 @@ router.post('/login', async (req, res) => {
         return res
           .status(401)
           .json({ message: 'Incorrect username and/or password' });
+        console.log('Username:', userName);
       }
 
       // User exists, check password
       const passwordMatch = await bcrypt.compare(pass, row.password);
+      console.log('Password:', passwordMatch);
 
       if (!passwordMatch) {
         return res
