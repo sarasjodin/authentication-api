@@ -10,7 +10,7 @@ const db = new sqlite3.Database(process.env.DATABASE_URL);
 
 router.post('/register', async (req, res) => {
   try {
-    const { username: userName, email, password: pass } = req.body;
+    const { username: userName, email: email, password: pass } = req.body;
 
     // Validation
     if (!userName || !pass || !email) {
@@ -54,13 +54,13 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    const { username: userName, email, password: pass } = req.body;
+    const { username: userName, password: pass } = req.body;
 
     // Validation
-    if (!userName || !pass || !email) {
+    if (!userName || !pass) {
       return res
         .status(400)
-        .json({ message: 'Username, email, and password are required' });
+        .json({ message: 'Username, and password are required' });
     }
 
     // Check credentials against database
