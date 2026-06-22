@@ -73,7 +73,6 @@ router.post('/login', async (req, res) => {
       }
 
       console.log('Username:', userName);
-      console.log('Email:', email);
 
       if (!row) {
         return res
@@ -96,8 +95,7 @@ router.post('/login', async (req, res) => {
       // Create JWT token
       const payload = {
         id: row.id,
-        username: row.username,
-        email: row.email
+        username: row.username
       };
       const token = jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: '1h'
