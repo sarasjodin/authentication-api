@@ -109,7 +109,8 @@ router.post('/login', async (req, res) => {
       // Create JWT token
       const payload = {
         id: row.id,
-        username: row.username
+        username: row.username,
+        created: row.created
       };
       const token = jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: '1h'
@@ -133,7 +134,7 @@ router.get('/protected', authenticateToken, (req, res) => {
     user: {
       id: req.user.id,
       username: req.user.username,
-      email: req.user.email
+      created: req.user.created
     }
   });
 });
