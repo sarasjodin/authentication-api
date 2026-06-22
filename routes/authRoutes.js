@@ -119,7 +119,7 @@ router.post('/login', async (req, res) => {
         message: 'User logged in successfully!',
         token: token
       };
-      return res.status(200).json({ responseData });
+      return res.status(200).json(responseData);
     });
   } catch (error) {
     console.error('Error logging in user:', error);
@@ -130,7 +130,7 @@ router.post('/login', async (req, res) => {
 // Protected routes
 router.get('/protected', authenticateToken, (req, res) => {
   res.json({
-    message: 'This is a protected route',
+    message: 'You have been authenticated.',
     user: {
       id: req.user.id,
       username: req.user.username,
