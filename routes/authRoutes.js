@@ -19,6 +19,24 @@ router.post('/register', async (req, res) => {
         .json({ message: 'Username, email, and password are required' });
     }
 
+    if (userName.length < 3 || userName.length > 30) {
+      return res.status(400).json({
+        message: 'Username must be between 3 and 30 characters'
+      });
+    }
+
+    if (email.length > 254) {
+      return res.status(400).json({
+        message: 'Invalid email address'
+      });
+    }
+
+    if (pass.length < 8) {
+      return res.status(400).json({
+        message: 'Password must be at least 8 characters'
+      });
+    }
+
     // Hash the password before storing it
     const hashedPassword = await bcrypt.hash(pass, 10);
 
@@ -31,7 +49,6 @@ router.post('/register', async (req, res) => {
 
     db.get(checkSql, [userName, email], (err, row) => {
       if (err) {
-        console.error('Error querying database:', err.message);
         return res.status(500).json({ message: 'Server error' });
       }
 
@@ -46,7 +63,6 @@ router.post('/register', async (req, res) => {
       const sql = `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`;
       db.run(sql, [userName, email, hashedPassword], (err) => {
         if (err) {
-          console.error('Error querying database:', err.message);
           return res.status(400).json({ message: 'Error creating user' });
         } else {
           return res.status(201).json({ message: 'User created successfully' });
@@ -54,7 +70,6 @@ router.post('/register', async (req, res) => {
       });
     });
   } catch (error) {
-    console.error('Error registering user:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -75,11 +90,8 @@ router.post('/login', async (req, res) => {
     const sql = `SELECT * FROM users WHERE username = ?`;
     db.get(sql, [userName], async (err, row) => {
       if (err) {
-        console.error('Error querying database:', err.message);
         return res.status(400).json({ message: 'Error authenticating' });
       }
-
-      console.log('Username:', userName);
 
       if (!row) {
         return res
@@ -89,8 +101,6 @@ router.post('/login', async (req, res) => {
 
       // User exists, check password
       const passwordMatch = await bcrypt.compare(pass, row.password);
-      console.log('Password:', passwordMatch);
-      console.log('Database row:', row);
 
       if (!passwordMatch) {
         return res
@@ -98,7 +108,6 @@ router.post('/login', async (req, res) => {
           .json({ message: 'Incorrect username and/or password' });
       }
 
-      console.log('Logging in user:', userName);
       // Create JWT token
       const payload = {
         id: row.id,
@@ -115,7 +124,6 @@ router.post('/login', async (req, res) => {
       return res.status(200).json(responseData);
     });
   } catch (error) {
-    console.error('Error logging in user:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -139,7 +147,7 @@ function authenticateToken(req, res, next) {
 
   // Token missing
   if (!token) {
-    res
+    return res
       .status(401)
       .json({ message: 'Not authorized for this route - token missing' });
   }
