@@ -24,8 +24,9 @@ router.post('/register', async (req, res) => {
 
     // Check if user already exists
 
-    const checkSql = `SELECT * FROM users WHERE username = ?`;
-    db.get(checkSql, [userName], (err, row) => {
+    const checkUserSql = `SELECT * FROM users WHERE username = ?`;
+    const checkEmailSql = `SELECT * FROM users WHERE email = ?`;
+    db.get(checkUserSql, [userName], (err, row) => {
       if (err) {
         console.error('Error querying database:', err.message);
         return res.status(500).json({ message: 'Server error' });
@@ -34,16 +35,29 @@ router.post('/register', async (req, res) => {
         return res.status(400).json({ message: 'Username already exists' });
       }
 
-      // If user does not exist, create new user
-      // Correct - save user (store in database)
-      const sql = `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`;
-      db.run(sql, [userName, email, hashedPassword], (err) => {
+      // Check if email already exists
+      db.get(checkEmailSql, [email], (err, row) => {
         if (err) {
           console.error('Error querying database:', err.message);
-          return res.status(400).json({ message: 'Error creating user' });
-        } else {
-          return res.status(201).json({ message: 'User created successfully' });
+          return res.status(500).json({ message: 'Server error' });
         }
+        if (row) {
+          return res.status(400).json({ message: 'Email already exists' });
+        }
+
+        // If user does not exist, create new user
+        // Correct - save user (store in database)
+        const sql = `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`;
+        db.run(sql, [userName, email, hashedPassword], (err) => {
+          if (err) {
+            console.error('Error querying database:', err.message);
+            return res.status(400).json({ message: 'Error creating user' });
+          } else {
+            return res
+              .status(201)
+              .json({ message: 'User created successfully' });
+          }
+        });
       });
     });
   } catch (error) {
