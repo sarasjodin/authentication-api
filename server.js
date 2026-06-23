@@ -5,23 +5,22 @@ This server will handle user registration, login, and token-based authentication
 const path = require('path');
 const dotenv = require('dotenv');
 
+// Load environment variables based on environment
 const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
 
 dotenv.config({
   path: path.resolve(__dirname, envFile)
 });
 
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('DATABASE_URL:', process.env.DATABASE_URL);
-
 const express = require('express');
-const authRoutes = require('./routes/authRoutes');
-const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const sqlite3 = require('sqlite3').verbose();
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Only my specific frontend may do browser requests.
+// Only my specific frontends may do browser requests.
 app.use(
   cors({
     origin: [
@@ -35,23 +34,18 @@ app.use(
 );
 app.use(express.json());
 
-// Health route
+// Health route endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'authentication-api' });
 });
 
-const PORT = process.env.PORT || 3000;
-
+// Authentication routes
 app.use('/api', authRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Authentication API running on port ${PORT}`);
-});
-
-const sqlite3 = require('sqlite3').verbose();
-
+// Connect to SQLite database
 const db = new sqlite3.Database(process.env.DATABASE_URL);
 
+// Create users table if not exist
 db.run(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,3 +55,7 @@ db.run(`
     created DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+app.listen(PORT, () => {
+  console.log(`Authentication API running on port ${PORT}`);
+});

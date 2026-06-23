@@ -1,4 +1,4 @@
-/* Routes for authentication API, including user registration and login endpoints. */
+/* Routes for authentication API, including user registration, login endpoint and protected routes. */
 const express = require('express');
 const router = express.Router();
 const sqlite3 = require('sqlite3').verbose();
@@ -8,18 +8,19 @@ const jwt = require('jsonwebtoken');
 // Connect to db
 const db = new sqlite3.Database(process.env.DATABASE_URL);
 
+/* REGISTER ROUTE */
 router.post('/register', async (req, res) => {
   try {
-    const { username: userName, email: email, password: pass } = req.body;
+    const { username, email, password } = req.body;
 
     // Validation
-    if (!userName || !pass || !email) {
+    if (!username || !password || !email) {
       return res
         .status(400)
         .json({ message: 'Username, email, and password are required' });
     }
 
-    if (userName.length < 3 || userName.length > 30) {
+    if (username.length < 3 || username.length > 30) {
       return res.status(400).json({
         message: 'Username must be between 3 and 30 characters'
       });
@@ -31,23 +32,22 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    if (pass.length < 8) {
+    if (password.length < 8) {
       return res.status(400).json({
         message: 'Password must be at least 8 characters'
       });
     }
 
     // Hash the password before storing it
-    const hashedPassword = await bcrypt.hash(pass, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Check if user already exists
-
+    // Check if username or email already exists
     const checkSql = `
   SELECT * FROM users
   WHERE username = ? OR email = ?
 `;
 
-    db.get(checkSql, [userName, email], (err, row) => {
+    db.get(checkSql, [username, email], (err, row) => {
       if (err) {
         return res.status(500).json({ message: 'Server error' });
       }
@@ -58,10 +58,9 @@ router.post('/register', async (req, res) => {
           .json({ message: 'Username or email already exists' });
       }
 
-      // If user does not exist, create new user
-      // Correct - save user (store in database)
+      // If user does not exist, create new user in db
       const sql = `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`;
-      db.run(sql, [userName, email, hashedPassword], (err) => {
+      db.run(sql, [username, email, hashedPassword], (err) => {
         if (err) {
           return res.status(400).json({ message: 'Error creating user' });
         } else {
@@ -74,12 +73,13 @@ router.post('/register', async (req, res) => {
   }
 });
 
+/* LOGIN ROUTE */
 router.post('/login', async (req, res) => {
   try {
-    const { username: userName, password: pass } = req.body;
+    const { username, password } = req.body;
 
     // Validation
-    if (!userName || !pass) {
+    if (!username || !password) {
       return res
         .status(400)
         .json({ message: 'Username, and password are required' });
@@ -88,7 +88,7 @@ router.post('/login', async (req, res) => {
     // Check credentials against database
     // Check if user exists
     const sql = `SELECT * FROM users WHERE username = ?`;
-    db.get(sql, [userName], async (err, row) => {
+    db.get(sql, [username], async (err, row) => {
       if (err) {
         return res.status(400).json({ message: 'Error authenticating' });
       }
@@ -100,7 +100,7 @@ router.post('/login', async (req, res) => {
       }
 
       // User exists, check password
-      const passwordMatch = await bcrypt.compare(pass, row.password);
+      const passwordMatch = await bcrypt.compare(password, row.password);
 
       if (!passwordMatch) {
         return res
@@ -128,7 +128,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Protected routes
+/* PROTECTED ROUTE */
 router.get('/protected', authenticateToken, (req, res) => {
   res.json({
     message: 'You have been authenticated.',
@@ -164,4 +164,5 @@ function authenticateToken(req, res, next) {
   });
 }
 
+// Export router to use in other files
 module.exports = router;
