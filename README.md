@@ -1,7 +1,12 @@
-# Authentication API
+# My Authentication Lab
 
-A live version of the API frontend:
-https://my-authentication-lab.netlify.app
+## Frontend
+
+[![Netlify Status](https://api.netlify.com/api/v1/badges/c31d6962-98b9-4f88-bc68-2b41750a0729/deploy-status)](https://app.netlify.com/projects/my-authentication-lab/deploys)
+
+A live version of the API frontend: https://my-authentication-lab.netlify.app/
+
+## Backend
 
 API Base URL:
 https://authentication.sarasjodin.se/api
