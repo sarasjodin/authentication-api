@@ -12,6 +12,7 @@ A live version of the API frontend: https://my-authentication-lab.netlify.app/
 
 API Base URL:
 https://authentication.sarasjodin.se/api
+Note: This is the API base URL, not a browsable web page
 
 Health check endpoint:
 GET https://authentication.sarasjodin.se/health
