@@ -1,5 +1,7 @@
 # My Authentication Lab
 
+A lab focused on user registration, login, JWT authentication, bcrypt password hashing and authorization for protected resources. 
+
 ## Frontend
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/c31d6962-98b9-4f88-bc68-2b41750a0729/deploy-status)](https://app.netlify.com/projects/my-authentication-lab/deploys)
